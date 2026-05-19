@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+opencv-python
+numpy
+pillow
+insightface
+onnxruntime
+faiss-cpu
+python-dotenv
+python-multipart
+requests
