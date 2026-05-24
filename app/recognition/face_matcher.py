@@ -1,47 +1,49 @@
-import numpy as np
+# app/recognition/face_matcher.py
 
-from app.recognition.known_faces_store import KnownFacesStore
+import numpy as np
 
 
 class FaceMatcher:
+    def __init__(self, threshold=0.5):
+        self.threshold = threshold
 
-    THRESHOLD = 0.50
+    def cosine_similarity(self, emb1, emb2):
+        if emb1 is None or emb2 is None:
+            return -1
+        
+        norm1 = np.linalg.norm(emb1)
+        norm2 = np.linalg.norm(emb2)
+        if norm1 == 0 or norm2 == 0:
+            return -1
+        
+        emb1 = emb1 / norm1
+        emb2 = emb2 / norm2
 
-    @staticmethod
-    def cosine_similarity(a, b):
+        return np.dot(emb1, emb2)
 
-        return np.dot(a, b) / (
-            np.linalg.norm(a) * np.linalg.norm(b)
-        )
+    def find_best_match(self, live_embedding, known_faces):
+        best_score = -1
+        best_match = None
 
-    @classmethod
-    def match_face(cls, embedding):
-
-        known_faces = KnownFacesStore.get_all_faces()
-
-        best_score = 0
-        best_user_id = None
-
-        for user_id, stored_embedding in known_faces.items():
-
-            similarity = cls.cosine_similarity(
-                embedding,
-                stored_embedding
+        for face in known_faces:
+            score = self.cosine_similarity(
+                live_embedding,
+                face["embedding"]
             )
 
-            if similarity > best_score:
-                best_score = similarity
-                best_user_id = user_id
+            if score > best_score:
+                best_score = score
+                best_match = face
 
-        if best_score >= cls.THRESHOLD:
+        if best_score >= self.threshold:
             return {
                 "matched": True,
-                "user_id": best_user_id,
-                "confidence": float(best_score)
+                "user": best_match,
+                "score": float(best_score)
             }
 
         return {
             "matched": False,
-            "user_id": None,
-            "confidence": float(best_score)
+            "user": None,
+            "score": float(best_score)
         }

@@ -1,34 +1,28 @@
 import cv2
 import numpy as np
-import base64
-
 from insightface.app import FaceAnalysis
 
 
 class FaceDetector:
 
-    app = FaceAnalysis(
-        name="buffalo_l",
-        providers=["CPUExecutionProvider"]
-    )
+    def __init__(self):
+        self.app = FaceAnalysis(
+            name="buffalo_l",
+            providers=["CPUExecutionProvider"]
+        )
+        self.app.prepare(ctx_id=0)
 
-    app.prepare(ctx_id=0)
+    def detect_faces(self, image):
+        """
+        Accepts OpenCV frame (numpy array)
+        """
 
-    @staticmethod
-    def decode_base64_image(image_base64: str):
-        image_data = base64.b64decode(image_base64)
+        if image is None:
+            return []
 
-        np_arr = np.frombuffer(image_data, np.uint8)
+        if len(image.shape) != 3:
+            return []
 
-        image = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
+        faces = self.app.get(image)
 
-        return image
-
-    @classmethod
-    def detect_faces(cls, image_base64: str):
-
-        image = cls.decode_base64_image(image_base64)
-
-        faces = cls.app.get(image)
-
-        return faces
+        return faces if faces is not None else []

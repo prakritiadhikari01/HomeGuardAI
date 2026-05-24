@@ -1,9 +1,10 @@
 import requests
+from decouple import config
 
 
 class DjangoClient:
 
-    BASE_URL = "http://192.168.1.9:8000/api"
+    BASE_URL = config("DJANGO_API_URL")
 
     @staticmethod
     def save_face_profile(payload):
@@ -17,8 +18,15 @@ class DjangoClient:
                 json=payload,
                 timeout=30
             )
-
-            return response.json()
+            try:
+                data=response.json()
+            except Exception as e:
+                print("Error parsing JSON response:", e)
+                data = {
+                    "status": "error",
+                    "message": "Invalid JSON response from server"
+                }
+            return data
 
         except Exception as e:
 
