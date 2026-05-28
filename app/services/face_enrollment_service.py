@@ -43,7 +43,7 @@ class FaceEnrollmentService:
     # -----------------------------
     # MAIN ENROLLMENT LOOP
     # -----------------------------
-    def enroll_face(self):
+    def enroll_face(self,home_member_id,label_name):
 
         cap = cv2.VideoCapture(0)
 
@@ -116,12 +116,12 @@ class FaceEnrollmentService:
         cap.release()
         cv2.destroyAllWindows()
 
-        return self.final_embedding()
+        return self.final_embedding(home_member_id, label_name)
 
     # -----------------------------
     # FINAL EMBEDDING (AVERAGE)
     # -----------------------------
-    def final_embedding(self):
+    def final_embedding(self,home_member_id,label_name):
 
         if len(self.embeddings) == 0:
             return None
@@ -131,8 +131,8 @@ class FaceEnrollmentService:
         avg_embedding = np.mean(embeddings_array, axis=0)
 
         payload = {
-            "home_id": "c45d3bc8-a5f5-406b-8932-c30c98d36820",
-            "label_name": "Prakriti_test",
+            "home_id": home_member_id,
+            "label_name": label_name,
             "embedding": avg_embedding.tolist()
         }
 

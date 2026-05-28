@@ -1,36 +1,26 @@
 # app/recognition/face_embedder.py
 
 import numpy as np
-from insightface.app import FaceAnalysis
-
 
 class FaceEmbedder:
-    def __init__(self):
-        self.app = FaceAnalysis(
-            name="buffalo_l",
-            providers=["CPUExecutionProvider"]
-        )
-
-        self.app.prepare(
-            ctx_id=0,
-            det_size=(320, 320)
-        )
-
-    def get_embedding(self, face_image):
+    def get_embedding(self, face):
         try:
-            faces = self.app.get(face_image)
-
-            if len(faces) == 0:
+            if face is None:
                 return None
 
-            embedding = faces[0].embedding
+            emb = face.embedding  # already computed by InsightFace
 
-            embedding = embedding.astype(np.float32)
+            if emb is None:
+                return None
 
-            embedding = embedding / np.linalg.norm(embedding)
+            emb = np.asarray(emb, dtype=np.float32)
 
-            return embedding
+            norm = np.linalg.norm(emb)
+            if norm == 0:
+                return None
+
+            return emb / norm
 
         except Exception as e:
-            print("Embedding Error:", e)
+            print("[Embedding Error]", e)
             return None

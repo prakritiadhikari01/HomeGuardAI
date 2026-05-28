@@ -10,20 +10,21 @@ class KnownFacesStore:
 
     def load_faces_from_django(self):
         try:
-            response = requests.get(
-                "http://127.0.0.1:8000/api/faces/all/"
-            )
-
+            response = requests.get("http://192.168.1.13:8000/api/faces/all/")
             data = response.json()
 
             self.known_faces = []
 
-            for user in data:
-                embedding = np.array(user["embedding"], dtype=np.float32)
+            for user in data["faces"]:   # ✅ FIX HERE
+                embedding = np.asarray(user["embedding"], dtype=np.float32)
+
+            norm = np.linalg.norm(embedding)
+            if norm != 0:
+                embedding = embedding / norm
 
                 self.known_faces.append({
-                    "user_id": user["user_id"],
-                    "name": user["name"],
+                    "id": user["id"],
+                    "name": user["label_name"],
                     "embedding": embedding
                 })
 
