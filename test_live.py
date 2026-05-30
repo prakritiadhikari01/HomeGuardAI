@@ -1,4 +1,4 @@
-from app.services.live_recognition_service import (
+from app.services.camera_recognition_service import (
     LiveRecognitionService
 )
 

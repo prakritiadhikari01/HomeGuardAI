@@ -1,55 +1,52 @@
-# app/services/recognition_service.py
-
+import requests
 import numpy as np
+from scipy.spatial.distance import cosine
 
-from app.detection.face_detector import FaceDetector
-from app.recognition.face_matcher import FaceMatcher
-from app.recognition.known_faces_store import KnownFacesStore
+DJANGO_API = "http://192.168.1.12:8000/api/v1/faces/"
 
 
 class RecognitionService:
-    def __init__(self):
-        self.detector = FaceDetector()
-        self.matcher = FaceMatcher(threshold=0.65)
-        self.store = KnownFacesStore()
 
-        self.store.load_faces_from_django()
-        self.known_faces = self.store.get_all_faces()
+    def load_registered_faces(self):
 
+        response = requests.get(DJANGO_API)
 
-    def recognize_frame(self, frame):
-        faces = self.detector.detect_faces(frame)
+        response.raise_for_status()
 
-        if not faces:
-            return []
+        return response.json()["faces"]
 
-        results = []
+    def recognize_embedding(self, current_embedding):
+
+        faces = self.load_registered_faces()
+
+        best_match = None
+        best_distance = 999
 
         for face in faces:
-            emb = np.asarray(face.get("embedding"), dtype=np.float32)
 
-            norm = np.linalg.norm(emb)
-            if norm != 0:
-                emb = emb / norm
-
-            if emb is None:
-                continue
-
-            match = self.matcher.find_best_match(
-                emb,
-                self.known_faces,
+            stored_embedding = np.array(
+                face["embedding"],
+                dtype=np.float32
             )
-            if match["matched"]:
-                event_type = "KNOWN_FACE"
-            else:
-                event_type = "UNKNOWN_FACE"
 
-            results.append({
-                "bbox": face.get("bbox"),
-                "embedding": emb.tolist() if hasattr(emb, "tolist") else emb,
-                "match": match,
-                "det_score": face.get("det_score", 0.0),
-                "is_unknown": not match["matched"]
-            })
+            distance = cosine(
+                current_embedding,
+                stored_embedding
+            )
 
-        return results
+            if distance < best_distance:
+                best_distance = distance
+                best_match = face
+
+        if best_match and best_distance < 0.4:
+
+            return {
+                "status": "known",
+                "name": best_match["label_name"],
+                "email": best_match["user_email"],
+                "distance": float(best_distance)
+            }
+
+        return {
+            "status": "unknown"
+        }

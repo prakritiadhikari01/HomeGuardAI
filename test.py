@@ -1,16 +1,39 @@
-from app.services.face_enrollment_service import FaceEnrollmentService
-from app.services.django_client import DjangoClient
-service = FaceEnrollmentService()
+# test.py
 
-result = service.enroll_face()
-
-print("EMBEDDING LENGTH:", len(result["embedding"]))
+from app.services.face_enrollment_service import (
+    FaceEnrollmentService
+)
 
 
-from app.services.django_client import DjangoClient
+HOME_MEMBER_ID = "27bdc8cd-ae0d-45e2-bef9-73f9e79a9f2b"
+LABEL_NAME = "Pratik"
 
-response = DjangoClient.save_face_profile({
-    "home_id": "YOUR_HOME_ID",
-    "label_name": "Prakriti",
-    "embedding": result["embedding"]
-})
+
+def main():
+
+    service = FaceEnrollmentService()
+
+    result = service.enroll_face(
+        home_member_id=HOME_MEMBER_ID,
+        label_name=LABEL_NAME
+    )
+
+    if not result:
+        print("Enrollment failed")
+        return
+
+    print("\nEnrollment Successful")
+    print(
+        "Embedding Length:",
+        len(result["embedding"])
+    )
+
+    print(
+        "Django Response:",
+        result["django_response"]
+    )
+
+
+
+if __name__ == "__main__":
+    main()

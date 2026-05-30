@@ -26,9 +26,6 @@ class FaceEnrollmentService:
         self.frames_per_step = 10
         self.frame_count = 0
 
-    # -----------------------------
-    # GET FACE EMBEDDING
-    # -----------------------------
     def get_embedding(self, frame):
 
         faces = self.face_app.get(frame)
@@ -40,9 +37,6 @@ class FaceEnrollmentService:
 
         return face.embedding
 
-    # -----------------------------
-    # MAIN ENROLLMENT LOOP
-    # -----------------------------
     def enroll_face(self,home_member_id,label_name):
 
         cap = cv2.VideoCapture(0)
@@ -85,9 +79,6 @@ class FaceEnrollmentService:
                 2
             )
 
-            # -------------------------
-            # FACE DETECTION
-            # -------------------------
             embedding = self.get_embedding(frame)
 
             if embedding is not None:
@@ -95,9 +86,7 @@ class FaceEnrollmentService:
                 self.embeddings.append(embedding)
                 self.frame_count += 1
 
-            # -------------------------
-            # STEP CONTROL
-            # -------------------------
+    
             if self.frame_count >= self.frames_per_step:
 
                 self.current_step += 1
@@ -118,9 +107,7 @@ class FaceEnrollmentService:
 
         return self.final_embedding(home_member_id, label_name)
 
-    # -----------------------------
-    # FINAL EMBEDDING (AVERAGE)
-    # -----------------------------
+    
     def final_embedding(self,home_member_id,label_name):
 
         if len(self.embeddings) == 0:
@@ -131,11 +118,11 @@ class FaceEnrollmentService:
         avg_embedding = np.mean(embeddings_array, axis=0)
 
         payload = {
-            "home_id": home_member_id,
+            "home_member_id": home_member_id,
             "label_name": label_name,
             "embedding": avg_embedding.tolist()
         }
-
+        print("Payload to send to Django:", payload)
         django_response = DjangoClient.save_face_profile(
             payload
         )
