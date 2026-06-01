@@ -1,8 +1,9 @@
 import cv2
 
-from recognition_service import RecognitionService
+from app.services.face_embedding_service import FaceEmbeddingService
+from app.services.face_recognition_service import RecognitionService
 
-CAMERA_URL = "http://192.168.1.10:8080/video"
+CAMERA_URL = "http://192.168.1.16:8080/video"
 
 cap = cv2.VideoCapture(CAMERA_URL)
 
@@ -16,11 +17,11 @@ while True:
     if not success:
         break
 
-    faces = embedding_service.extract_faces(frame)
+    faces = embedding_service.detect_faces(frame)
 
     for face in faces:
 
-        embedding = embedding_service.generate_embedding(face)
+        embedding = embedding_service.get_embedding(face)
 
         result = recognizer.recognize_embedding(
             embedding

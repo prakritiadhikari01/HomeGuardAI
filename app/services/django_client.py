@@ -52,3 +52,22 @@ class DjangoClient:
                 "status": "error",
                 "message": str(e)
             }
+    
+     
+    def get_all_faces():
+
+        url = f"{DjangoClient.BASE_URL}/faces/all/"
+
+        try:
+
+            response = requests.get(
+                url,
+                timeout=30
+            )
+
+            return response.json().get("faces", [])
+
+        except Exception as e:
+
+            print(f"Error fetching faces: {e}")
+            return []
