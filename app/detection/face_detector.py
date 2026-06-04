@@ -1,3 +1,4 @@
+#app\detection\face_detector.py
 from insightface.app import FaceAnalysis
 
 

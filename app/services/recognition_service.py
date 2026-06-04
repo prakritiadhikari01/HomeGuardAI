@@ -1,6 +1,8 @@
+#app\services\face_recognition_service.py
 import numpy as np
 from scipy.spatial.distance import cosine
 
+from app.recognition import known_faces_store
 from app.services.face_embedding_service import FaceEmbeddingService
 from app.services.django_client import DjangoClient
 
@@ -18,8 +20,7 @@ class FaceRecognitionService:
         if embedding is None:
             return None
 
-        registered_faces = DjangoClient.get_all_faces()
-
+        registered_faces = known_faces_store.get_all_faces()
         best_match = None
         best_distance = 999
 

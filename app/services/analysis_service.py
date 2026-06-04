@@ -1,5 +1,5 @@
+#app\services\analysis_service.py
 from app.detection.face_detector import FaceDetector
-from app.recognition.embedding_service import EmbeddingService
 from app.recognition.face_matcher import FaceMatcher
 
 
@@ -19,7 +19,7 @@ class AnalysisService:
 
         face = faces[0]
 
-        embedding = EmbeddingService.extract_embedding(
+        embedding = FaceMatcher.extract_embedding(
             face
         )
 

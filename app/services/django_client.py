@@ -54,6 +54,7 @@ class DjangoClient:
             }
     
      
+    @staticmethod
     def get_all_faces():
 
         url = f"{DjangoClient.BASE_URL}/faces/all/"
@@ -70,4 +71,25 @@ class DjangoClient:
         except Exception as e:
 
             print(f"Error fetching faces: {e}")
+            return []
+    
+    @staticmethod
+    def get_active_cameras():
+
+        url = f"{DjangoClient.BASE_URL}/devices/active/"
+
+        try:
+
+            response = requests.get(
+                url,
+                timeout=30
+            )
+            data=response.json()
+            print(f"[DJANGO RESPONSE] Status Code: {response.status_code}")
+            print(f"[DJANGO RESPONSE] Response Body: {response.text}")
+            return data.get("cameras", [])
+
+        except Exception as e:
+
+            print(f"Error fetching active cameras: {e}")
             return []

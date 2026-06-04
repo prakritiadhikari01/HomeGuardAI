@@ -38,7 +38,7 @@ class KnownFacesStore:
                 self.known_faces.append({
                     "id": user["id"],
                     "name": user["label_name"],
-                    "member_id": user["home_member"],
+                    "member_id": user["member_id"],
                     "face_profile_id": user["id"],
                     "embedding": embedding
                 })

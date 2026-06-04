@@ -1,3 +1,4 @@
+#app\api\routes.py
 from fastapi import APIRouter
 from pydantic import BaseModel
 
@@ -5,7 +6,8 @@ from app.services.analysis_service import AnalysisService
 from fastapi import APIRouter
 from pydantic import BaseModel
 
-from app.services.embedding_service import EmbeddingService
+from app.services.face_embedding_service import FaceEmbeddingService
+
 
 router = APIRouter()
 
@@ -36,7 +38,7 @@ def analyze_frame(payload: AnalyzeRequest):
 @router.post("/extract-embedding")
 def extract_embedding(payload: EmbeddingRequest):
 
-    embedding = EmbeddingService.extract_embedding(
+    embedding = FaceEmbeddingService.extract_embedding(
         payload.image
     )
 

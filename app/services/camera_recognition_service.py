@@ -1,50 +1,53 @@
+#app\services\camera_recognition_service.py
 import cv2
 
-from app.services.face_embedding_service import FaceEmbeddingService
-from app.services.face_recognition_service import RecognitionService
+from app.services.ai_event_orchestrator import (
+    AIEventOrchestrator
+)
+import time
 
-CAMERA_URL = "http://192.168.1.16:8080/video"
+class CameraRecognitionService:
+    EVENT_COOLDOWN = 5  # seconds
+    def __init__(
+        self,
+        camera_url,
+        device_id
+    ):
+        self.camera_url = camera_url
+        self.device_id = device_id
+        self.last_detection = 0
 
-cap = cv2.VideoCapture(CAMERA_URL)
+    def start(self):
 
-embedding_service = FaceEmbeddingService()
-recognizer = RecognitionService()
-
-while True:
-
-    success, frame = cap.read()
-
-    if not success:
-        break
-
-    faces = embedding_service.detect_faces(frame)
-
-    for face in faces:
-
-        embedding = embedding_service.get_embedding(face)
-
-        result = recognizer.recognize_embedding(
-            embedding
+        cap = cv2.VideoCapture(
+            self.camera_url
         )
 
-        label = result.get("name", "Unknown")
+        while True:
 
-        print(result)
+            success, frame = cap.read()
 
-        cv2.putText(
-            frame,
-            label,
-            (20, 40),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            1,
-            (0, 255, 0),
-            2
-        )
+            if not success:
+                break
 
-    cv2.imshow("Recognition", frame)
+            current_time = time.time()
 
-    if cv2.waitKey(1) == 27:
-        break
+            if current_time - self.last_detection >= self.EVENT_COOLDOWN:
 
-cap.release()
-cv2.destroyAllWindows()
+                AIEventOrchestrator.process_frame(
+                    frame=frame,
+                    device_id=self.device_id
+                )
+
+                self.last_detection = current_time
+
+            cv2.imshow(
+                "HomeGuard AI",
+                frame
+            )
+
+            if cv2.waitKey(1) == 27:
+                break
+
+        cap.release()
+        cv2.destroyAllWindows()

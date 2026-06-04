@@ -1,44 +1,53 @@
 # app/services/ai_event_orchestrator.py
 
-from app.services.django_client import DjangoClient
+from app.services.face_recognition_service import (
+    FaceRecognitionService
+)
+
+from app.services.django_client import (
+    DjangoClient
+)
 
 
 class AIEventOrchestrator:
 
-    CONFIDENCE_THRESHOLD = 0.65
-
     @staticmethod
-    def process_recognition_result(
-        *,
+    def process_frame(
+        frame,
         device_id,
-        recognition_result
+        image_url=None
     ):
 
-        match = recognition_result.get("match", {})
-
-        matched = match.get("matched", False)
-        score = match.get("score", 0.0)
-
-        if matched and score >= AIEventOrchestrator.CONFIDENCE_THRESHOLD:
-
-            payload = {
-                "device_id": device_id,
-                "event_type": "KNOWN_FACE",
-                "confidence_score": score,
-                "member_id": match["user"]["member_id"],
-                "face_profile_id": match["user"]["face_profile_id"]
-            }
-
-        else:
-
-            payload = {
-                "device_id": device_id,
-                "event_type": "UNKNOWN_FACE",
-                "confidence_score": score,
-            }
-
-        response = DjangoClient.send_detection_event(
-            payload
+        result = (
+            FaceRecognitionService()
+            .recognize(frame)
         )
 
-        return response
+        payload = {
+            "device_id": str(device_id),
+            "person_type": "UNKNOWN",
+            "confidence_score": 0.0,
+            "image_url": image_url
+        }
+
+        if (
+            result
+            and result["status"] == "known"
+        ):
+
+            payload.update(
+                {
+                    "person_type": "KNOWN",
+                    "member_id": result["member_id"],
+                    "face_profile_id": result["face_profile_id"],
+                    "confidence_score": result[
+                        "confidence_score"
+                    ]
+                }
+            )
+
+        return (
+            DjangoClient.send_detection_event(
+                payload
+            )
+        )

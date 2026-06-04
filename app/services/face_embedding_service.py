@@ -1,3 +1,4 @@
+#app\services\face_embedding_service.py
 from insightface.app import FaceAnalysis
 
 
