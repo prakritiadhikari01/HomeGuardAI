@@ -67,7 +67,7 @@ class FaceRecognitionService:
 
             return {
                 "status": "known",
-                "name": best_match["label_name"],
+                "person_label": best_match["label_name"],
                 "member_id": best_match["member_id"],
                 "face_profile_id": best_match["id"],
                 "confidence_score": float(

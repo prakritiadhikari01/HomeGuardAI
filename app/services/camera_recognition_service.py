@@ -1,53 +1,74 @@
-#app\services\camera_recognition_service.py
+# app/services/camera_recognition_service.py
+
 import cv2
+import time
 
 from app.services.ai_event_orchestrator import (
     AIEventOrchestrator
 )
-import time
+
 
 class CameraRecognitionService:
-    EVENT_COOLDOWN = 5  # seconds
+
+    EVENT_COOLDOWN = 5
+
     def __init__(
         self,
-        camera_url,
-        device_id
+        device_id,
+        home_id,
+        camera_name,
+        location,
+        stream_url,
     ):
-        self.camera_url = camera_url
         self.device_id = device_id
+        self.home_id = home_id
+        self.camera_name = camera_name
+        self.location = location
+        self.stream_url = stream_url
+
+        self.running = True
         self.last_detection = 0
+
+    def stop(self):
+        self.running = False
 
     def start(self):
 
         cap = cv2.VideoCapture(
-            self.camera_url
+            self.stream_url
         )
 
-        while True:
+        while self.running:
 
             success, frame = cap.read()
 
             if not success:
-                break
+
+                time.sleep(2)
+
+                cap.release()
+
+                cap = cv2.VideoCapture(
+                    self.stream_url
+                )
+
+                continue
 
             current_time = time.time()
 
-            if current_time - self.last_detection >= self.EVENT_COOLDOWN:
+            if (
+                current_time
+                - self.last_detection
+                >= self.EVENT_COOLDOWN
+            ):
 
                 AIEventOrchestrator.process_frame(
                     frame=frame,
-                    device_id=self.device_id
+                    device_id=self.device_id,
                 )
 
-                self.last_detection = current_time
-
-            cv2.imshow(
-                "HomeGuard AI",
-                frame
-            )
-
-            if cv2.waitKey(1) == 27:
-                break
+                self.last_detection = (
+                    current_time
+                )
 
         cap.release()
-        cv2.destroyAllWindows()
