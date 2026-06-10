@@ -11,7 +11,7 @@ class DjangoClient:
     @staticmethod
     def send_detection_event(payload):
 
-        url = f"{DjangoClient.BASE_URL}/events/detect/"
+        url = f"{DjangoClient.BASE_URL}/events/ingest/"
 
         try:
 
