@@ -1,6 +1,6 @@
 # app/services/ai_event_orchestrator.py
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.services.face_recognition_service import (
     FaceRecognitionService
@@ -47,7 +47,7 @@ class AIEventOrchestrator:
             "image_url": image_url,
 
             "timestamp": (
-                datetime.utcnow()
+                datetime.now(timezone.utc)
                 .isoformat()
             )
         }
@@ -79,7 +79,7 @@ class AIEventOrchestrator:
                     )
                 }
             )
-
+        print(f"Detection from {location}: {payload['person_label']}")
         return (
             DjangoClient.send_detection_event(
                 payload

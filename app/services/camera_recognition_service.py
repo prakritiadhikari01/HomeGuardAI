@@ -65,6 +65,8 @@ class CameraRecognitionService:
                 AIEventOrchestrator.process_frame(
                     frame=frame,
                     device_id=self.device_id,
+                    home_id=self.home_id,
+                    location=self.location,
                 )
 
                 self.last_detection = (
