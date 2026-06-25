@@ -5,7 +5,7 @@ from app.services.face_enrollment_service import (
 )
 
 
-HOME_MEMBER_ID = "27bdc8cd-ae0d-45e2-bef9-73f9e79a9f2b"
+HOME_MEMBER_ID = "smarika"
 LABEL_NAME = "Pratik"
 
 
