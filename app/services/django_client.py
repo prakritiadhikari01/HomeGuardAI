@@ -1,95 +1,58 @@
-# app/services/django_client.py
-
 import requests
 from decouple import config
 
 
 class DjangoClient:
-
     BASE_URL = config("DJANGO_API_URL")
+    API_SECRET_KEY = config("API_SECRET_KEY")
+
+    @classmethod
+    def _headers(cls):
+        return {"X-API-Key": cls.API_SECRET_KEY}
 
     @staticmethod
     def send_detection_event(payload):
-
         url = f"{DjangoClient.BASE_URL}/events/ingest/"
-
         try:
-
             response = requests.post(
-                url,
-                json=payload,
-                timeout=30
+                url, json=payload, headers=DjangoClient._headers(), timeout=30
             )
-
             return response.json()
-
         except Exception as e:
+            return {"status": "error", "message": str(e)}
 
-            return {
-                "status": "error",
-                "message": str(e)
-            }
-        
     @staticmethod
     def save_face_profile(payload):
-
         url = f"{DjangoClient.BASE_URL}/faces/save/"
-
         try:
-
             response = requests.post(
-                url,
-                json=payload,
-                timeout=30
+                url, json=payload, headers=DjangoClient._headers(), timeout=30
             )
             print(f"[DJANGO RESPONSE] Status Code: {response.status_code}")
             print(f"[DJANGO RESPONSE] Response Body: {response.text}")
             return response.json()
-
         except Exception as e:
+            return {"status": "error", "message": str(e)}
 
-            return {
-                "status": "error",
-                "message": str(e)
-            }
-    
-     
     @staticmethod
     def get_all_faces():
-
         url = f"{DjangoClient.BASE_URL}/faces/all/"
-
         try:
-
-            response = requests.get(
-                url,
-                timeout=30
-            )
-
+            response = requests.get(url, headers=DjangoClient._headers(), timeout=30)
             return response.json().get("faces", [])
-
         except Exception as e:
-
             print(f"Error fetching faces: {e}")
             return []
-    
+
     @staticmethod
     def get_active_cameras():
-
         url = f"{DjangoClient.BASE_URL}/devices/active/"
-
         try:
-
-            response = requests.get(
-                url,
-                timeout=30
-            )
-            data=response.json()
+            response = requests.get(url, headers=DjangoClient._headers(), timeout=30)
+            data = response.json()
             print(f"[DJANGO RESPONSE] Status Code: {response.status_code}")
             print(f"[DJANGO RESPONSE] Response Body: {response.text}")
             return data.get("cameras", [])
-
         except Exception as e:
-
             print(f"Error fetching active cameras: {e}")
             return []
