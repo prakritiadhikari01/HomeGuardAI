@@ -8,6 +8,7 @@ from app.domain.perception.detection import (
     DetectionResult,
     ObjectType,
 )
+from app.domain.perception.perception_result import PerceptionResult
 
 
 class YOLODetector:
@@ -98,6 +99,10 @@ class YOLODetector:
                 )
             )
 
-        return DetectionResult(
-            detections=detections,
+
+        return PerceptionResult(
+            detections=DetectionResult(
+                detections=detections,
+            ),
+            raw_prediction=prediction,
         )

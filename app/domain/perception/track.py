@@ -1,6 +1,7 @@
+from collections import deque
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import List, Optional, Tuple
+from typing import Deque, Optional, Tuple
 from uuid import UUID
 
 from app.domain.perception.detection import Detection, PersonStatus
@@ -16,6 +17,7 @@ class Track:
     """
 
     track_id: int
+
     detection: Detection
 
     first_seen: datetime = field(default_factory=datetime.utcnow)
@@ -24,76 +26,121 @@ class Track:
     age_frames: int = 1
     missing_frames: int = 0
 
-    # History of bounding boxes for movement analysis
-    history: List[Tuple[int, int, int, int]] = field(default_factory=list)
+    active: bool = True
+    ended: bool = False
 
-    # Recognition state
+    history: Deque[Tuple[int, int, int, int]] = field(
+        default_factory=lambda: deque(maxlen=50)
+    )
+
+    recognized_once: bool = False
+
     person_status: PersonStatus = PersonStatus.UNSEEN
     person_label: Optional[str] = None
+
     member_id: Optional[UUID] = None
     face_profile_id: Optional[UUID] = None
+
     recognition_confidence: Optional[float] = None
 
-    # Best face captured during this track
+    best_face_crop: Optional[object] = None
     best_face_bbox: Optional[Tuple[int, int, int, int]] = None
     best_face_confidence: float = 0.0
-    best_face_frame: Optional[object] = None
 
-    # Session link (filled by EventSessionManager)
     session_id: Optional[str] = None
 
-    def update(self, detection: Detection) -> None:
-        """Update the track with a new detection from the next frame."""
+    def update(self, detection: Detection):
+
         self.detection = detection
+
         self.last_seen = datetime.utcnow()
+
         self.age_frames += 1
+
         self.missing_frames = 0
+
         self.history.append(detection.bbox)
 
-    def mark_missing(self) -> None:
-        """Called when the tracker temporarily loses this object."""
+    def mark_missing(self):
+
         self.missing_frames += 1
+
+    def deactivate(self):
+
+        self.active = False
+
+    def end(self):
+
+        self.active = False
+        self.ended = True
 
     def attach_recognition(
         self,
         *,
-        person_status: PersonStatus,
-        person_label: Optional[str] = None,
-        member_id: Optional[UUID] = None,
-        face_profile_id: Optional[UUID] = None,
-        confidence: Optional[float] = None,
-    ) -> None:
-        """Attach face recognition result to this track."""
-        self.person_status = person_status
-        self.person_label = person_label
+        status: PersonStatus,
+        label: Optional[str],
+        member_id: Optional[UUID],
+        face_profile_id: Optional[UUID],
+        confidence: Optional[float],
+    ):
+
+        self.person_status = status
+        self.person_label = label
+
         self.member_id = member_id
         self.face_profile_id = face_profile_id
+
         self.recognition_confidence = confidence
+
+        self.recognized_once = True
 
     def update_best_face(
         self,
-        face_bbox: Tuple[int, int, int, int],
-        face_confidence: float,
-        frame: object,
-    ) -> None:
-        """Keep the best face seen during this track."""
-        if face_confidence > self.best_face_confidence:
-            self.best_face_confidence = face_confidence
-            self.best_face_bbox = face_bbox
-            self.best_face_frame = frame
+        crop,
+        bbox,
+        confidence,
+    ):
+
+        if confidence > self.best_face_confidence:
+
+            self.best_face_confidence = confidence
+            self.best_face_bbox = bbox
+            self.best_face_crop = crop
 
     @property
-    def duration_seconds(self) -> float:
-        return (self.last_seen - self.first_seen).total_seconds()
+    def current_bbox(self):
+
+        return self.detection.bbox
 
     @property
-    def is_recognized(self) -> bool:
+    def center(self):
+
+        x1, y1, x2, y2 = self.current_bbox
+
+        return (
+            (x1 + x2) // 2,
+            (y1 + y2) // 2,
+        )
+
+    @property
+    def duration_seconds(self):
+
+        return (
+            self.last_seen - self.first_seen
+        ).total_seconds()
+
+    @property
+    def is_person(self):
+
+        return self.detection.is_person
+
+    @property
+    def is_recognized(self):
+
         return self.person_status == PersonStatus.KNOWN
 
     @property
-    def is_unknown_person(self) -> bool:
-        return self.person_status == PersonStatus.UNKNOWN
+    def is_unknown_person(self):
 
-    @property
-    def current_bbox(self) -> Tuple[int, int, int, int]:
-        return self.detection.bbox
+        return self.person_status == PersonStatus.UNKNOWN
+    
