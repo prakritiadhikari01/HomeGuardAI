@@ -1,58 +1,38 @@
 # app/recognition/known_faces_store.py
-
-import requests
-import numpy as np
+import threading
+from app.services.django_client import DjangoClient
 
 
 class KnownFacesStore:
+    """
+    In-memory cache of enrolled face profiles, refreshed periodically
+    (every CAMERA_SYNC_INTERVAL_SECONDS in main.py) instead of being
+    re-fetched from Django on every frame — previous code pulled the
+    full ~300KB /faces/all/ response every ~5 seconds.
 
-    def __init__(self):
-        self.known_faces = []
+    Keeps Django's raw nested pose structure intact (profile["embeddings"]
+    [pose]["embeddings"][i]["embedding"]) since FaceRecognitionService
+    matches against every pose, not a flattened single embedding.
+    """
 
-    def load_faces_from_django(self):
+    _instance = None
+    _lock = threading.Lock()
 
+    def __new__(cls):
+        if cls._instance is None:
+            with cls._lock:
+                if cls._instance is None:
+                    cls._instance = super().__new__(cls)
+                    cls._instance.profiles = []
+        return cls._instance
+
+    def refresh(self):
         try:
-
-            response = requests.get(
-                "http://192.168.1.13:8000/api/faces/all/"
-            )
-
-            data = response.json()
-
-            self.known_faces = []
-
-            for user in data["faces"]:
-
-                embedding = np.asarray(
-                    user["embedding"],
-                    dtype=np.float32
-                )
-
-                norm = np.linalg.norm(
-                    embedding
-                )
-
-                if norm != 0:
-                    embedding = embedding / norm
-
-                self.known_faces.append({
-                    "id": user["id"],
-                    "name": user["label_name"],
-                    "member_id": user["member_id"],
-                    "face_profile_id": user["id"],
-                    "embedding": embedding
-                })
-
-            print(
-                f"Loaded {len(self.known_faces)} known faces"
-            )
-
+            profiles = DjangoClient.get_all_faces()
+            self.profiles = profiles
+            print(f"[KnownFacesStore] Refreshed — {len(profiles)} face profiles cached")
         except Exception as e:
-
-            print(
-                "Error loading known faces:",
-                e
-            )
+            print("[KnownFacesStore] Refresh error:", e)
 
     def get_all_faces(self):
-        return self.known_faces
+        return self.profiles
