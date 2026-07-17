@@ -1,0 +1,103 @@
+from __future__ import annotations
+
+from ultralytics import YOLO
+
+from app.core.config import settings
+from app.domain.perception.detection import (
+    Detection,
+    DetectionResult,
+    ObjectType,
+)
+
+
+class YOLODetector:
+    """
+    Runs YOLO inference and converts the result into
+    domain Detection objects.
+
+    Infrastructure Layer
+
+    YOLO -> DetectionResult
+    """
+
+    CLASS_MAPPING = {
+        # People
+        "person": ObjectType.PERSON,
+
+        # Vehicles
+        "car": ObjectType.VEHICLE,
+        "truck": ObjectType.VEHICLE,
+        "bus": ObjectType.VEHICLE,
+        "motorcycle": ObjectType.VEHICLE,
+        "bicycle": ObjectType.VEHICLE,
+
+        # Animals
+        "dog": ObjectType.ANIMAL,
+        "cat": ObjectType.ANIMAL,
+        "horse": ObjectType.ANIMAL,
+        "cow": ObjectType.ANIMAL,
+        "sheep": ObjectType.ANIMAL,
+        "bird": ObjectType.ANIMAL,
+
+        # Objects
+        "backpack": ObjectType.PACKAGE,
+        "suitcase": ObjectType.PACKAGE,
+        "handbag": ObjectType.PACKAGE,
+    }
+
+    def __init__(self):
+
+        self.model = YOLO(settings.YOLO_MODEL_PATH)
+
+        self.confidence_threshold = settings.YOLO_CONFIDENCE
+
+    def detect(
+        self,
+        frame,
+        frame_index: int | None = None,
+        timestamp: float | None = None,
+    ) -> DetectionResult:
+
+        prediction = self.model.predict(
+            source=frame,
+            conf=self.confidence_threshold,
+            verbose=False,
+        )[0]
+
+        detections = []
+
+        for box in prediction.boxes:
+
+            class_id = int(box.cls.item())
+
+            class_name = prediction.names[class_id]
+
+            object_type = self.CLASS_MAPPING.get(
+                class_name,
+                ObjectType.UNKNOWN,
+            )
+
+            # Ignore unsupported objects
+            if object_type == ObjectType.UNKNOWN:
+                continue
+
+            confidence = float(box.conf.item())
+
+            x1, y1, x2, y2 = map(
+                int,
+                box.xyxy[0].tolist(),
+            )
+
+            detections.append(
+                Detection(
+                    object_type=object_type,
+                    confidence=confidence,
+                    bbox=(x1, y1, x2, y2),
+                    frame_index=frame_index,
+                    timestamp=timestamp,
+                )
+            )
+
+        return DetectionResult(
+            detections=detections,
+        )
