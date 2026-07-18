@@ -45,3 +45,7 @@ class TrackResult:
             for t in self.tracks
             if t.is_unknown_person
         ]
+    
+    @property
+    def has_trackers(self):
+        return len(self.tracks)>0

@@ -13,7 +13,6 @@ class MotionResult:
 
     motion_detected: bool
     motion_score: float =0.0
-    motion_area:float = 0.0
     changed_regions: List[Tuple[int, int, int, int]] = field(default_factory=list)
 
     @property

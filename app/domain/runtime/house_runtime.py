@@ -61,3 +61,23 @@ class HouseRuntime:
 
     def mark_synced(self) -> None:
         self.last_sync_at = datetime.utcnow()
+
+    def apply_settings(
+        self,
+        settings: RuntimeHouseSettings,
+    ) -> None:
+        """
+        Apply updated house settings from Django.
+        """
+        self.settings = settings
+        self.mark_synced()
+
+    def apply_security_mode(
+        self,
+        security_mode: str,
+    ) -> None:
+        """
+        Update the current security mode.
+        """
+        self.security_mode = security_mode
+        self.mark_synced()

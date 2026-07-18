@@ -47,7 +47,7 @@ class Track:
     best_face_bbox: Optional[Tuple[int, int, int, int]] = None
     best_face_confidence: float = 0.0
 
-    session_id: Optional[str] = None
+    session_id: Optional[UUID] = None
 
     def update(self, detection: Detection):
 
@@ -107,6 +107,23 @@ class Track:
             self.best_face_bbox = bbox
             self.best_face_crop = crop
 
+    def assign_session(self,session_id: UUID):
+        self.session_id=session_id
+
+    def has_session(self):
+        return self.session_id is not None
+    
+    @property
+    def is_finished(self):
+        return self.ended
+    
+    @property
+    def face_ready(self):
+        return (
+            self.best_face_confidence>0
+            and self.best_face_crop is not None
+        )
+
     @property
     def current_bbox(self):
 
@@ -144,3 +161,6 @@ class Track:
 
         return self.person_status == PersonStatus.UNKNOWN
     
+    @property
+    def object_type(self):
+        return self.detection.object_type

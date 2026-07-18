@@ -56,3 +56,23 @@ class CameraRuntime:
     def frame_processed(self) -> None:
         self.frames_processed += 1
         self.last_frame_at = datetime.utcnow()
+
+    def apply_settings(
+        self,
+        settings: RuntimeDeviceSettings,
+    ) -> None:
+        """
+        Apply the latest device settings received from Django.
+        """
+        self.settings = settings
+        self.mark_synced()
+
+
+    def mark_synced(self) -> None:
+        """
+        Records the last successful synchronization with Django.
+        """
+        self.last_sync_at = datetime.utcnow()
+
+    def update_fps(self,fps:float) -> None:
+        self.current_fps = fps
