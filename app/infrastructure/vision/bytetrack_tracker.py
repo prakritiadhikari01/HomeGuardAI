@@ -28,16 +28,32 @@ class ByteTrackTracker:
         active_tracks = []
         alive_ids = set()
 
-        for index, tracker_id in enumerate(tracked.tracker_id):
+        detections = perception.detections.detections
+
+        # ByteTrack may return fewer/reordered detections than YOLO.
+        count = min(
+            len(detections),
+            len(tracked.tracker_id),
+        )
+
+        for index in range(count):
+
+            tracker_id = tracked.tracker_id[index]
+
             if tracker_id is None:
                 continue
+
             tracker_id = int(tracker_id)
             alive_ids.add(tracker_id)
 
-            detection = perception.detections.detections[index]
+            detection = detections[index]
+            detection.track_id = tracker_id
 
             if tracker_id not in self._tracks:
-                track = Track(track_id=tracker_id, detection=detection)
+                track = Track(
+                    track_id=tracker_id,
+                    detection=detection,
+                )
                 self._tracks[tracker_id] = track
             else:
                 self._tracks[tracker_id].update(detection)
@@ -45,14 +61,21 @@ class ByteTrackTracker:
             active_tracks.append(self._tracks[tracker_id])
 
         ended = []
+
         for track_id in list(self._tracks.keys()):
+
             if track_id in alive_ids:
                 continue
+
             track = self._tracks[track_id]
             track.mark_missing()
+
             if track.missing_frames > self.MAX_MISSING_FRAMES:
                 track.end()
                 ended.append(track)
                 del self._tracks[track_id]
 
-        return TrackResult(tracks=active_tracks, ended_tracks=ended)
+        return TrackResult(
+            tracks=active_tracks,
+            ended_tracks=ended,
+        )

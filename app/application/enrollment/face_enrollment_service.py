@@ -9,12 +9,28 @@ class FaceEnrollmentService:
     FIX: previously used a separate FaceEmbeddingService that duplicated
     InsightFaceService's get_face_data() almost exactly (both wrapped
     ModelRegistry). Now uses InsightFaceService directly — one face
-    model wrapper for both live recognition and enrollment."""
+    model wrapper for both live recognition and enrollment.
+
+    FIX (this revision): STEPS use LOOK_* naming internally to match
+    frontend pose-progression labels, but Django's FaceProfile.embeddings
+    schema and CompleteEnrollmentSerializer expect bare pose names
+    (CENTER/LEFT/RIGHT/UP/DOWN). POSE_KEY_MAP translates at the boundary
+    so internal step names never leak into the Django payload.
+    """
 
     STEPS = ["LOOK_CENTER", "LOOK_LEFT", "LOOK_RIGHT", "LOOK_UP", "LOOK_DOWN"]
     FRAMES_PER_STEP = 10
     BEST_EMBEDDINGS_PER_POSE = 3
     MIN_FACE_CONFIDENCE = 0.60
+
+    # Internal step name -> Django/FaceProfile pose key
+    POSE_KEY_MAP = {
+        "LOOK_CENTER": "CENTER",
+        "LOOK_LEFT": "LEFT",
+        "LOOK_RIGHT": "RIGHT",
+        "LOOK_UP": "UP",
+        "LOOK_DOWN": "DOWN",
+    }
 
     def __init__(self):
         self.face_service = InsightFaceService()
@@ -104,8 +120,15 @@ class FaceEnrollmentService:
         return int((self.current_step / len(self.STEPS)) * 100)
 
     def _select_best_embeddings(self) -> dict:
+        """Returns {'CENTER': [[512 floats], [512 floats], ...], ...} —
+        matches FaceProfile.embeddings schema exactly: bare pose keys,
+        each mapping to a list of embedding vectors (not a dict with
+        confidence/quality metadata — that's internal-only bookkeeping
+        used to pick the best frames)."""
         result = {}
         for pose, data in self.pose_embeddings.items():
             ordered = sorted(data["embeddings"], key=lambda x: x["confidence"], reverse=True)
-            result[pose] = {"embeddings": ordered[: self.BEST_EMBEDDINGS_PER_POSE]}
+            best = ordered[: self.BEST_EMBEDDINGS_PER_POSE]
+            django_key = self.POSE_KEY_MAP[pose]
+            result[django_key] = [item["embedding"] for item in best]
         return result

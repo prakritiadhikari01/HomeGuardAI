@@ -1,4 +1,6 @@
-from app.services.django_client import DjangoClient
+
+
+from app.infrastructure.api.django_client import DjangoClient
 
 
 def main():

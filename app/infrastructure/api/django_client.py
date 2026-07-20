@@ -10,7 +10,7 @@ class DjangoClient:
     def send_detection_event(payload):
         url = f"{DjangoClient.BASE_URL}/events/ingest/"
         try:
-            response = requests.post(url, json=payload, headers=get_django_auth_headers(),timeout=settings.API_TIMEOUT)
+            response = requests.post(url, json=payload, headers=get_django_auth_headers(), timeout=settings.API_TIMEOUT)
             return response.json()
         except Exception as e:
             return {"status": "error", "message": str(e)}
@@ -51,7 +51,16 @@ class DjangoClient:
 
     @staticmethod
     def save_face_profile(payload):
-        url = f"{DjangoClient.BASE_URL}/faces/save/"
+        """
+        POST /api/enrollment/complete/  — NOT /faces/save/. The
+        enrollment session flow lives entirely under CompleteEnrollmentView,
+        which resolves the Django EnrollmentSession by session_id and
+        creates/updates the user's FaceProfile via EnrollmentService.
+        FaceSaveView (/faces/save/) is a separate, unrelated endpoint —
+        posting there for enrollment completion silently hits the wrong
+        view and enrollment never completes.
+        """
+        url = f"{DjangoClient.BASE_URL}/enrollment/complete/"
         try:
             response = requests.post(url, json=payload, headers=get_django_auth_headers(), timeout=settings.API_TIMEOUT)
             print(f"[DJANGO RESPONSE] Status Code: {response.status_code}")
@@ -68,6 +77,16 @@ class DjangoClient:
             return response.json().get("faces", [])
         except Exception as e:
             print(f"Error fetching faces: {e}")
+            return []
+
+    @staticmethod
+    def get_faces_for_home(home_id: str):
+        url = f"{DjangoClient.BASE_URL}/homes/{home_id}/faces/"
+        try:
+            response = requests.get(url, headers=get_django_auth_headers(), timeout=settings.API_TIMEOUT)
+            return response.json().get("faces", [])
+        except Exception as e:
+            print(f"Error fetching faces for home {home_id}: {e}")
             return []
 
     @staticmethod
