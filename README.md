@@ -33,11 +33,10 @@ HomeGuardAI is a stateless FastAPI service that processes camera streams, detect
 ## 3. System Context
 
 ```
- Phone camera ───► HomeGuardAI ──────────► HomeGuard backend (Django)
-                        │  detect · track        │  users · homes · roles
-                        │  recognize · enrich    │  events · alerts · lock
-                        │                        │
-                     Ollama (local LLMs)      Cloudinary (media)
+ Phone camera ───────► HomeGuard backend (Django) ──────────────► HomeGuardAI
+                           │  users · homes · roles        │   detect · track 
+                           │  events · alerts · lock       │  recognize · enrich 
+                   Cloudinary (media)             Ollama (local LLMs) 
 ```
 
 ## 4. Processing Pipeline
