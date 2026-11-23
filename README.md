@@ -33,7 +33,7 @@ HomeGuardAI is a stateless FastAPI service that processes camera streams, detect
 ## 3. System Context
 
 ```
- Phone camera ───────► HomeGuard backend (Django) ──────────────► HomeGuardAI
+Phone camera ───────► HomeGuard backend (Django) ──────────────► HomeGuardAI
                            │  users · homes · roles        │   detect · track 
                            │  events · alerts · lock       │  recognize · enrich 
                    Cloudinary (media)             Ollama (local LLMs) 
@@ -50,6 +50,9 @@ Each active camera is handled by an independent worker:
 5. **Recognition** (InsightFace): classify the track as a known member or unknown, using the home's enrolled faces.
 6. **Session reporting**: open on first resolved sighting, send progress updates while the track is active, close when the track is lost.
 7. **Enrichment**: build a clip (with pre-/post-event buffer) and thumbnail, upload them, generate a summary, and attach everything to the closed event.
+   
+   <img width="1005" height="1820" alt="activity drawio" src="https://github.com/user-attachments/assets/4d8a699a-9750-421c-8657-aba537be5ac8" />
+
 
 ## 5. Backend Integration
 
